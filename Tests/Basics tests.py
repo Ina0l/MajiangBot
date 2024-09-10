@@ -1,0 +1,1 @@
+print(len("Starts a majiang game, type 'join' to join it\nUse this command again to force start the game"))
