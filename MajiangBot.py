@@ -126,6 +126,7 @@ async def start(ctx):
                 tile: Tile = draw_pile[ctx.guild].draw()
                 draw_pile[ctx.guild].remove_tile(tile)
                 player.add_tile(tile)
+            player.tiles.sort()
 
         feedback: str = ""
 
