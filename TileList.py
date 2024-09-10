@@ -1,5 +1,3 @@
-from array import array
-
 from Families import Families, get_family
 from SortingObject import SortingObject
 from Tile import Tile
