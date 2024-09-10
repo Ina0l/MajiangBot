@@ -64,8 +64,8 @@ class DrawPile:
                 tile_nb += 1
 
     def draw(self) -> Tile:
-        drawed_tile_nb = randint(1, self.get_count())
-        return self.get_tile_by_index(drawed_tile_nb)
+        drawn_tile_nb = randint(1, self.get_count())
+        return self.get_tile_by_index(drawn_tile_nb)
 
     def remove_tile(self, tile: Tile) -> None:
         getattr(self, tile.family)[tile.nb] -= 1
