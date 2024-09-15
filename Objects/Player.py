@@ -1,12 +1,12 @@
 from discord import User
 
-from Tile import Tile
-from TileList import TileList
+from Tiles.Tile import Tile
+from Tiles.TileList import TileList
 
 
 class Player:
     def __init__(self, user: User):
-        self.user = user
+        self.user: User = user
         self.score = 0
         self.tiles: TileList = TileList([])
         self.shown_tiles: TileList = TileList([])
@@ -27,3 +27,5 @@ class Player:
         self.throw_tile(tile)
         self.shown_tiles.append(tile)
 
+    def does_win(self) -> bool:
+        pass

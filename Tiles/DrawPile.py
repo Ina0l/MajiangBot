@@ -1,7 +1,7 @@
-from Families import *
+from Objects.Families import *
 from random import randint
 
-from Tile import Tile
+from Tiles.Tile import Tile
 
 
 class DrawPile:

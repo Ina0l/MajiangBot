@@ -1,4 +1,4 @@
-from Families import Families, get_family
+from Objects.Families import Families, get_family
 from SortingObject import SortingObject
 from Tile import Tile
 
@@ -19,7 +19,7 @@ class TileList:
     def append(self, tile: Tile) -> None:
         self.tiles.append(tile)
 
-    def remove(self, tile: Tile):
+    def remove(self, tile: Tile) -> None:
         self.tiles.remove(tile)
 
     def get_family(self, family: Families) -> list[Tile]:
@@ -53,3 +53,6 @@ class TileList:
             tile_list.append(tile)
 
         self.tiles = tile_list
+
+    def count_combinations(self) -> int:
+        pass

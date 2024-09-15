@@ -1,5 +1,8 @@
-from Families import Families
+from Objects.Families import Families
 
+
+feng_names: dict[int: str] = {1: "dong", 2: "nan", 3: "xi", 4: "bei"}
+jian_names: dict[int: str] = {1: "zhong", 2: "fa", 3: "bai"}
 
 class Tile:
     def __init__(self, family: str, nb: int):
@@ -27,3 +30,11 @@ class Tile:
         string += "_"
         string += self.family
         return string
+
+    def get_name(self) -> str:
+        if not self.is_special:
+            return str(self.nb)+" "+self.family
+        elif self.family == "feng":
+            return feng_names[self.nb]
+        else:
+            return jian_names[self.nb]

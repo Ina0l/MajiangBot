@@ -1,6 +1,6 @@
-from Families import Families
-from DrawPile import DrawPile
-from Tile import Tile
+from Objects.Families import Families
+from Tiles.DrawPile import DrawPile
+from Tiles.Tile import Tile
 
 
 draw_pile = DrawPile()
