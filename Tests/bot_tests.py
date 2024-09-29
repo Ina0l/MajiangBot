@@ -14,8 +14,8 @@ async def test(ctx: Context):
 @bot.tree.command(name = "emoji",
                 description = "send the corresponding majiang emoji (for test purposes)")
 async def emoji(interaction, name: str):
-    await interaction.response.send_message(Emojis.get_emoji(bot, name))
+    await interaction.response.send_message(Emojis.get_emoji(name))
 
 @bot.command()
 async def emoji(ctx, name: str):
-    await ctx.send(Emojis.get_emoji(bot, name))
+    await ctx.send(Emojis.get_emoji(name))

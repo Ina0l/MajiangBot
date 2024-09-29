@@ -1,3 +1,5 @@
+from typing import Optional
+
 from discord import User
 
 from Tiles.Tile import Tile
@@ -10,6 +12,10 @@ class Player:
         self.score = 0
         self.tiles: TileList = TileList([])
         self.shown_tiles: TileList = TileList([])
+        self.combo_tiles: list[TileList] = []
+        self.not_combo_tiles: TileList = TileList([])
+        self.last_set_combo: Optional[TileList] = None
+        self.combos_nb: int
 
     def __str__(self):
         return self.user.name

@@ -1,6 +1,7 @@
 from typing import Optional
 
 import discord.user
+from discord import Guild
 
 from Tiles.DrawPile import DrawPile
 from Objects.Player import Player
@@ -15,7 +16,6 @@ class GameHolder:
         self.draw_pile: DrawPile = DrawPile()
         self.throwed_tiles: ThrownPile = ThrownPile()
         self.first_player: Optional[Player] = None
-        self.last_thrown_tile: Optional[Tile] = None
 
     def get_player_by_discord_user(self, user: discord.user.User) -> discord.user.User:
         for player in self.player_list:
@@ -30,4 +30,4 @@ class GameHolder:
         self.first_player: Player = choice(self.player_list)
 
 
-Game: dict[discord.Guild: GameHolder] = {}
+Game: dict[Guild, GameHolder] = dict()

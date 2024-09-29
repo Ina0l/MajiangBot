@@ -1,15 +1,14 @@
 from tkinter import *
 from tkinter import ttk
 
-from Bot import prefix, bot, token
+import MajiangBot
 
 
 def launch() -> None:
     global launching_root
     launching_root.destroy()
 
-    print("bot launched with prefix "+prefix)
-    bot.run(token)
+    MajiangBot.launch_bot()
 
 def destroy() -> None:
     global launching_root

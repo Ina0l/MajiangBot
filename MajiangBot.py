@@ -4,7 +4,7 @@ from discord.ext.commands import Context
 
 import Bot
 import TurnsAlogrithms
-from Objects import GameHolder
+import Objects.GameHolder as GameHolder
 from Objects.Player import Player
 from Tiles.Tile import Tile
 
@@ -14,6 +14,9 @@ bot = Bot.bot
 starting: dict[discord.Guild: bool] = {}
 In_Game: dict[discord.Guild: bool] = {}
 
+
+def launch_bot():
+    Bot.bot.run(Bot.token)
 
 @bot.event
 async def on_ready():

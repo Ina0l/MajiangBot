@@ -3,13 +3,13 @@ import discord
 import Bot
 
 
-def get_emoji(bot: Bot, name: str) -> str:
-    return str(discord.utils.get(bot.emojis, name=name))
+def get_emoji(name: str) -> str:
+    return str(discord.utils.get(Bot.bot.emojis, name=name))
 
-def get_full_emoji_list(bot: Bot) -> list[str]:
+def get_full_emoji_list() -> list[str]:
     emojis_list = []
     for emoji_name in emojis_list_str:
-        emojis_list.append(get_emoji(bot, emoji_name))
+        emojis_list.append(get_emoji(emoji_name))
     return emojis_list
 
 emojis_list_str = ["1_tong", "2_tong", "3_tong", "4_tong", "5_tong", "6_tong", "7_tong", "8_tong", "9_tong",
