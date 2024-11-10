@@ -1,5 +1,5 @@
 from random import choice
-from typing import Any
+from typing import Any, Optional
 
 import discord
 from discord import SelectOption, ButtonStyle, Interaction
@@ -13,18 +13,28 @@ from Objects.Player import Player
 from Tiles import Tile
 
 
-async def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile):
-    player.throw_tile(tile)
-    GameHolder.Game[ctx.guild].draw_pile.remove_tile(tile)
-    GameHolder.Game[ctx.guild].throwed_tiles.append(tile)
-    await ctx.channel.send("<@"+str(player.user.id)+">"+ " thrown the tile:")
-    await ctx.channel.send(Emojis.get_emoji(str(tile)))
-    await ctx.channel.send("Here are all the thrown tiles:")
-    await ctx.channel.send(str(GameHolder.Game[ctx.guild].throwed_tiles))
-    GameHolder.Game[ctx.guild].throwed_tiles.last_thrown_tile = tile
+def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile):
+        player.throw_tile(tile)
+        GameHolder.Game[ctx.guild].draw_pile.remove_tile(tile)
+        GameHolder.Game[ctx.guild].throwed_tiles.append(tile)
+        GameHolder.Game[ctx.guild].throwed_tiles.last_thrown_tile = tile
 
 async def set_combo():
     pass
+
+class ThrowView(discord.ui.View):
+    def __init__(self, *, ctx: Context, player: Player):
+        self.ctx = ctx
+        self.player = player
+        super().__init__(timeout=300)
+        self.add_item(ThrowSelection(ctx, player))
+        self.thrown_tile: Optional[Tile.Tile] = None
+
+    def on_timeout(self) -> None:
+        self.thrown_tile = choice(self.player.tiles.tiles)
+        throwing_tile(self.player, self.ctx, self.thrown_tile)
+        self.stop()
+
 
 class ThrowSelection(discord.ui.Select):
     def __init__(self, ctx: Context, player: Player):
@@ -38,54 +48,43 @@ class ThrowSelection(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction) -> Any:
         for tile in self.player.tiles.tiles:
             if tile.get_name() == self.values[0]:
-                await throwing_tile(self.player, self.ctx, tile)
+                view: ThrowView = self.view
+                view.thrown_tile = tile
+                throwing_tile(self.player, self.ctx, tile)
                 await self.player.user.send("tile "+Emojis.get_emoji(str(tile))+" thrown")
+        self.view.stop()
         self.disabled = True
 
-class ThrowView(discord.ui.View):
-    def __init__(self, *, ctx: Context, player: Player):
-        self.ctx = ctx
-        self.player = player
-        super().__init__(timeout=300)
-        self.add_item(ThrowSelection(ctx, player))
-
-    def on_timeout(self) -> None:
-        throwing_tile(self.player, self.ctx, choice(self.player.tiles.tiles))
-        self.stop()
-
-
 async def win_check(button):
-    button.parent_wiew.clear_items()
-    button.parent_wiew.stop()
+    button.view.stop()
 
 class ChooseToWinView(discord.ui.View):
     def __init__(self, user: discord.abc.Messageable):
         super().__init__()
         self.user = user
-        self.add_item(IsWinningButton(self))
-        self.add_item(IsntWinningButton(self))
+        self.add_item(IsWinningButton())
+        self.add_item(IsntWinningButton())
 
     async def on_timeout(self) -> None:
         await self.user.send("You aren't winning")
-        self.clear_items()
         self.stop()
 
 class IsWinningButton(discord.ui.Button):
-    def __init__(self, view: ChooseToWinView):
+    def __init__(self):
         super().__init__(label="Yes", style=ButtonStyle.green)
-        self.parent_wiew = view
 
     async def callback(self, interaction: Interaction[ClientT]) -> Any:
-        await self.parent_wiew.user.send("You chose to win")
+        await self.view.user.send("You chose to win")
         await win_check(self)
 
 class IsntWinningButton(discord.ui.Button):
-    def __init__(self, view: ChooseToWinView):
+    def __init__(self):
         super().__init__(label="No", style=ButtonStyle.red)
-        self.parent_wiew = view
 
     async def callback(self, interaction: Interaction[ClientT]) -> Any:
-        await self.parent_wiew.user.send("You aren't winning")
-        self.parent_wiew.clear_items()
-        self.parent_wiew.stop()
+        await self.view.user.send("You aren't winning")
+        self.view.stop()
 
+class TakeView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
