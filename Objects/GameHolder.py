@@ -28,6 +28,8 @@ class GameHolder:
 
     def set_first_player(self):
         self.first_player: Player = choice(self.player_list)
+        self.player_list.remove(self.first_player)
+        self.player_list = [self.first_player]+self.player_list
 
 
 Game: dict[Guild, GameHolder] = dict()

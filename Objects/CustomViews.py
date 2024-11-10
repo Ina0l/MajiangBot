@@ -2,7 +2,8 @@ from random import choice
 from typing import Any
 
 import discord
-from discord import Interaction, SelectOption
+from discord import SelectOption, ButtonStyle, Interaction
+from discord._types import ClientT
 from discord.ext.commands import Context
 
 from Methods import Emojis
@@ -10,17 +11,16 @@ from Methods.Emojis import get_emoji
 import Objects.GameHolder as GameHolder
 from Objects.Player import Player
 from Tiles import Tile
-from Tiles import TileList
 
 
 async def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile):
     player.throw_tile(tile)
     GameHolder.Game[ctx.guild].draw_pile.remove_tile(tile)
     GameHolder.Game[ctx.guild].throwed_tiles.append(tile)
-    await ctx.send("<@"+str(player.user.id)+">"+ " thrown the tile:")
-    await ctx.send(Emojis.get_emoji(str(tile)))
-    await ctx.send("Here are all the thrown tiles:")
-    await ctx.send(str(GameHolder.Game[ctx.guild].throwed_tiles))
+    await ctx.channel.send("<@"+str(player.user.id)+">"+ " thrown the tile:")
+    await ctx.channel.send(Emojis.get_emoji(str(tile)))
+    await ctx.channel.send("Here are all the thrown tiles:")
+    await ctx.channel.send(str(GameHolder.Game[ctx.guild].throwed_tiles))
     GameHolder.Game[ctx.guild].throwed_tiles.last_thrown_tile = tile
 
 async def set_combo():
@@ -40,47 +40,52 @@ class ThrowSelection(discord.ui.Select):
             if tile.get_name() == self.values[0]:
                 await throwing_tile(self.player, self.ctx, tile)
                 await self.player.user.send("tile "+Emojis.get_emoji(str(tile))+" thrown")
-
-class ComboSelection(discord.ui.Select):
-    def __init__(self, player: Player, combo_list: list[TileList.TileList]):
-        self.player = player
-        self.combo_list = combo_list
-        options = []
-        for combo in combo_list:
-            name = combo.tiles[0].get_name()+", "
-            name += combo.tiles[1].get_name()+", "
-            name += combo.tiles[2].get_name()
-            options.append(discord.SelectOption(label=name, emoji=Emojis.get_emoji(str(combo.tiles[0])), description="use these tiles to form a combo"))
-        options.append(discord.SelectOption(label="pass", emoji="✅", description="don't form other combos"))
-        super().__init__(placeholder="Select a combo", max_values=1, min_values=1, options=options)
-
-    async def callback(self, interaction: Interaction) -> Any:
-        if self.values[0] == "pass":
-            self.player.last_set_combo = None
-        else:
-            tile_names = self.values[0].split(", ")
-            tiles = TileList.TileList([])
-            for tile_name in tile_names:
-                tiles.append(self.player.tiles.get_tile_by_name(tile_name))
-            self.player.last_set_combo = tiles
+        self.disabled = True
 
 class ThrowView(discord.ui.View):
     def __init__(self, *, ctx: Context, player: Player):
         self.ctx = ctx
         self.player = player
-        super().__init__(timeout=180)
+        super().__init__(timeout=300)
         self.add_item(ThrowSelection(ctx, player))
 
     def on_timeout(self) -> None:
         throwing_tile(self.player, self.ctx, choice(self.player.tiles.tiles))
         self.stop()
 
-class ComboView(discord.ui.View):
-    def __init__(self, player: Player, combo_list: list[TileList.TileList]):
-        self.player = player
-        self.combo_list = combo_list
-        super().__init__(timeout=180)
-        self.add_item(ComboSelection(player, combo_list))
 
-    def on_timeout(self) -> None:
-        pass
+async def win_check(button):
+    button.parent_wiew.clear_items()
+    button.parent_wiew.stop()
+
+class ChooseToWinView(discord.ui.View):
+    def __init__(self, user: discord.abc.Messageable):
+        super().__init__()
+        self.user = user
+        self.add_item(IsWinningButton(self))
+        self.add_item(IsntWinningButton(self))
+
+    async def on_timeout(self) -> None:
+        await self.user.send("You aren't winning")
+        self.clear_items()
+        self.stop()
+
+class IsWinningButton(discord.ui.Button):
+    def __init__(self, view: ChooseToWinView):
+        super().__init__(label="Yes", style=ButtonStyle.green)
+        self.parent_wiew = view
+
+    async def callback(self, interaction: Interaction[ClientT]) -> Any:
+        await self.parent_wiew.user.send("You chose to win")
+        await win_check(self)
+
+class IsntWinningButton(discord.ui.Button):
+    def __init__(self, view: ChooseToWinView):
+        super().__init__(label="No", style=ButtonStyle.red)
+        self.parent_wiew = view
+
+    async def callback(self, interaction: Interaction[ClientT]) -> Any:
+        await self.parent_wiew.user.send("You aren't winning")
+        self.parent_wiew.clear_items()
+        self.parent_wiew.stop()
+
