@@ -1,7 +1,7 @@
 from discord.ext.commands import Context
 
 from Methods import Emojis
-from Bot import bot, admin_ids
+from Bot import bot, admin_ids, token
 
 
 @bot.command()
@@ -19,3 +19,5 @@ async def emoji(interaction, name: str):
 @bot.command()
 async def emoji(ctx, name: str):
     await ctx.send(Emojis.get_emoji(name))
+
+bot.run(token)
