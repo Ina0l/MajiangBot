@@ -50,7 +50,7 @@ class ThrowSelection(discord.ui.Select):
                 view: ThrowView = self.view
                 view.thrown_tile = tile
                 throwing_tile(self.player, self.ctx, tile)
-                await self.player.user.send("tile "+Emojis.get_emoji(str(tile))+" thrown")
+                await interaction.response.send_message("tile " + Emojis.get_emoji(str(tile)) + " thrown")
         self.view.stop()
         self.disabled = True
 
@@ -63,8 +63,7 @@ class ChooseToWinView(discord.ui.View):
         super().__init__()
         self.user = user
         self.is_winning = False
-        self.add_item(IsWinningButton())
-        self.add_item(IsntWinningButton())
+        self.add_item(IsWinningButton()).add_item(IsntWinningButton())
 
     async def on_timeout(self) -> None:
         await self.user.send("You aren't winning")
@@ -75,7 +74,7 @@ class IsWinningButton(discord.ui.Button):
         super().__init__(label="Yes", style=ButtonStyle.green)
 
     async def callback(self, interaction: Interaction) -> Any:
-        await self.view.user.send("You chose to win")
+        await interaction.response.send_message("You chose to win")
         await win_check(self)
 
 class IsntWinningButton(discord.ui.Button):
@@ -83,16 +82,15 @@ class IsntWinningButton(discord.ui.Button):
         super().__init__(label="No", style=ButtonStyle.red)
 
     async def callback(self, interaction: Interaction) -> Any:
-        await self.view.user.send("You aren't winning")
+        await interaction.response.send_message("You aren't winning")
         self.view.stop()
 
 class TakeView(discord.ui.View):
     def __init__(self, next_player: Player, thrown_tile: Tile.Tile):
+        super().__init__()
         self.next_player = next_player
         self.thrown_tile = thrown_tile
-        self.add_item(TakeButton())
-        self.add_item(DontTakeButton())
-        super().__init__()
+        self.add_item(TakeButton()).add_item(DontTakeButton())
 
 class TakeButton(discord.ui.Button):
     def __init__(self):
@@ -106,4 +104,5 @@ class DontTakeButton(discord.ui.Button):
         super().__init__(label="Don't take", style=ButtonStyle.red)
 
     async def callback(self, interaction: Interaction) -> Any:
-        pass
+        self.view.stop()
+        await interaction.response.send_message("you chose not to take this tile")

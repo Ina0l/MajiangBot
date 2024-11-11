@@ -47,8 +47,7 @@ async def first_turn(interaction: discord.Interaction = None, ctx: context.Conte
 
         feedback += "<@" + str(player.user.id) + ">"
 
-    await ctx.send(feedback + "\nthe game has started,\n" + GameHolder.Game[
-        ctx.guild].first_player.user.name + " is the first player")
+    await ctx.send(feedback + "\nthe game has started,\n" + GameHolder.Game[ctx.guild].first_player.user.name + " is the first player")
 
 
     is_winning_view: CustomViews.ChooseToWinView = CustomViews.ChooseToWinView(GameHolder.Game[ctx.guild].first_player.user)
@@ -66,8 +65,11 @@ async def first_turn(interaction: discord.Interaction = None, ctx: context.Conte
         await ctx.channel.send("Here are all the thrown tiles:")
         await ctx.channel.send(str(GameHolder.Game[ctx.guild].throwed_tiles))
 
-        take_view: CustomViews.TakeView = CustomViews.TakeView(GameHolder.Game[ctx.guild].player_list[1], throw_view.thrown_tile)
-        await ctx.send("Do you want to pickup this tile ?", view=take_view)
+        for player in GameHolder.Game[ctx.guild].player_list:
+            if player != GameHolder.Game[ctx.guild].first_player:
+                take_view: CustomViews.TakeView = CustomViews.TakeView(GameHolder.Game[ctx.guild].player_list[1], throw_view.thrown_tile)
+                await player.user.send("Do you want to pickup this tile: "+str(Emojis.get_emoji(str(throw_view.thrown_tile)))+" ?", view=take_view)
+                await take_view.wait()
 
         await turn(GameHolder.Game[ctx.guild].player_list[1], ctx)
     else:
@@ -76,6 +78,8 @@ async def first_turn(interaction: discord.Interaction = None, ctx: context.Conte
         await ctx.channel.send(Emojis.get_emojis(GameHolder.Game[ctx.guild].first_player.tiles.get_str_list()))
 
 async def turn(player: Player, ctx: context.Context) -> None:
+    GameHolder.Game[ctx.guild].player_list = GameHolder.Game[ctx.guild].player_list[1:]+[GameHolder.Game[ctx.guild].player_list[0]]
+
     drawn_tile = GameHolder.Game[ctx.guild].draw_pile.draw()
     GameHolder.Game[ctx.guild].draw_pile.remove_tile(drawn_tile)
     player.add_tile(drawn_tile)
@@ -101,8 +105,12 @@ async def turn(player: Player, ctx: context.Context) -> None:
         await ctx.channel.send("Here are all the thrown tiles:")
         await ctx.channel.send(str(GameHolder.Game[ctx.guild].throwed_tiles))
 
-        take_view: CustomViews.TakeView = CustomViews.TakeView(GameHolder.Game[ctx.guild].get_next_player(player),throw_view.thrown_tile)
-        await ctx.send("Do you want to pickup this tile ?", view=take_view)
+        for player in GameHolder.Game[ctx.guild].player_list:
+            if player != GameHolder.Game[ctx.guild].first_player:
+                take_view: CustomViews.TakeView = CustomViews.TakeView(GameHolder.Game[ctx.guild].player_list[1], throw_view.thrown_tile)
+                await player.user.send("Do you want to pickup this tile: "+str(Emojis.get_emoji(str(throw_view.thrown_tile)))+" ?", view=take_view)
+                await take_view.wait()
+
         await turn(GameHolder.Game[ctx.guild].get_next_player(player), ctx)
     else:
         await ctx.channel.send("<@" + str(GameHolder.Game[ctx.guild].first_player.user.id) + "> won !")
