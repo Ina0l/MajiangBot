@@ -162,3 +162,5 @@ class TileList:
             if is_tile_unique:
                 unique_tiles.append(tile)
         return unique_tiles
+
+    def get_str_list(self) -> list[str]: return [str(tile) for tile in self.tiles]

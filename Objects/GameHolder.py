@@ -31,5 +31,6 @@ class GameHolder:
         self.player_list.remove(self.first_player)
         self.player_list = [self.first_player]+self.player_list
 
+    def get_next_player(self, player) -> Player: return self.player_list[self.player_list.index(player)+1]
 
 Game: dict[Guild, GameHolder] = dict()

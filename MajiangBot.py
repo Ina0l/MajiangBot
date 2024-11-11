@@ -6,7 +6,6 @@ import Bot
 import TurnsAlogrithms
 import Objects.GameHolder as GameHolder
 from Objects.Player import Player
-from Tiles.Tile import Tile
 
 
 bot = Bot.bot
@@ -15,8 +14,7 @@ starting: dict[discord.Guild: bool] = {}
 In_Game: dict[discord.Guild: bool] = {}
 
 
-def launch_bot():
-    Bot.bot.run(Bot.token)
+def launch_bot(): bot.run(Bot.token)
 
 @bot.event
 async def on_ready():
@@ -24,7 +22,7 @@ async def on_ready():
     print("Bot connected as {0.user} !".format(bot))
 
 @bot.tree.command(name = "start",
-                  description = "Starts a majiang game, type 'join' to join it. Use this command again to force start the game")
+                  description = "Starts a majiang game, type 'join' to join it. Use this command again to start the game")
 async def start(interaction):
     global starting
     global In_Game
@@ -38,50 +36,18 @@ async def start(interaction):
         if not interaction.guild in starting:
             starting.update({interaction.guild: False})
 
-        if starting[interaction.guild] and len(GameHolder.Game[interaction.guild].player_list) > 0:
-            starting.update({interaction.guild: False})
-            In_Game.update({interaction.guild: True})
+        if starting[interaction.guild]:
+            if len(GameHolder.Game[interaction.guild].player_list) > 0:
+                starting.update({interaction.guild: False})
+                In_Game.update({interaction.guild: True})
 
-            GameHolder.Game[interaction.guild].set_first_player()
-            GameHolder.Game[interaction.guild].player_list.remove(GameHolder.Game[interaction.guild].first_player)
-            player_list = [GameHolder.Game[interaction.guild].first_player]
-            for player in GameHolder.Game[interaction.guild].player_list:
-                player_list.append(player)
-
-            GameHolder.Game[interaction.guild].player_list = player_list
-
-            for player in GameHolder.Game[interaction.guild].player_list:
-                for a in range(16):
-                    tile: Tile = GameHolder.Game[interaction.guild].draw_pile.draw()
-                    GameHolder.Game[interaction.guild].draw_pile.remove_tile(tile)
-                    player.add_tile(tile)
-                if player == GameHolder.Game[interaction.guild].first_player:
-                    tile: Tile = GameHolder.Game[interaction.guild].draw_pile.draw()
-                    GameHolder.Game[interaction.guild].draw_pile.remove_tile(tile)
-                    player.add_tile(tile)
-                player.tiles.sort()
-
-            feedback: str = ""
-
-            for player in GameHolder.Game[interaction.guild].player_list:
-                text = ""
-                for tile in player.tiles.tiles:
-                    text += str(discord.utils.get(bot.emojis, name=str(tile)))
-                await player.user.send("here's your tiles:\n"+text)
-                if player.user.name == GameHolder.Game[interaction.guild].first_player.user.name:
-                    await player.user.send("your are the first player")
-
-                feedback += "<@"+str(player.user.id)+">"
-
-            await interaction.response.send_message(feedback +"\nthe game has started,\n" +
-                                                    GameHolder.Game[interaction.guild].first_player.user.name + " is the first player")
-
-            await TurnsAlogrithms.first_turn(interaction=interaction)
-
+                await TurnsAlogrithms.first_turn(interaction=interaction)
+            else: await interaction.response.send_message("You need at least 2 players to player majiang")
 
         else:
             GameHolder.Game[interaction.guild] = GameHolder.GameHolder()
             starting[interaction.guild] = True
+            GameHolder.Game[interaction.guild].player_list.append(Player(interaction.user))
             await interaction.response.send_message("starting game,\ntype \"join\" to join the game:")
     else:
         await interaction.response.send_message("A game is already in progress")
@@ -100,48 +66,18 @@ async def start(ctx: Context):
         if not ctx.guild in starting:
             starting.update({ctx.guild: False})
 
-        if starting[ctx.guild] and len(GameHolder.Game[ctx.guild].player_list) > 0:
-            starting.update({ctx.guild: False})
-            In_Game.update({ctx.guild: True})
+        if starting[ctx.guild]:
+            if len(GameHolder.Game[ctx.guild].player_list) > 0:
+                starting.update({ctx.guild: False})
+                In_Game.update({ctx.guild: True})
 
-            GameHolder.Game[ctx.guild].set_first_player()
-            GameHolder.Game[ctx.guild].player_list.remove(GameHolder.Game[ctx.guild].first_player)
-            player_list = [GameHolder.Game[ctx.guild].first_player]
-            for player in GameHolder.Game[ctx.guild].player_list:
-                player_list.append(player)
-
-            GameHolder.Game[ctx.guild].player_list = player_list
-
-            for player in GameHolder.Game[ctx.guild].player_list:
-                for a in range(16):
-                    tile: Tile = GameHolder.Game[ctx.guild].draw_pile.draw()
-                    GameHolder.Game[ctx.guild].draw_pile.remove_tile(tile)
-                    player.add_tile(tile)
-                if player == GameHolder.Game[ctx.guild].first_player:
-                    tile: Tile = GameHolder.Game[ctx.guild].draw_pile.draw()
-                    GameHolder.Game[ctx.guild].draw_pile.remove_tile(tile)
-                    player.add_tile(tile)
-                player.tiles.sort()
-
-            feedback: str = ""
-
-            for player in GameHolder.Game[ctx.guild].player_list:
-                text = ""
-                for tile in player.tiles.tiles:
-                    text += str(discord.utils.get(bot.emojis, name=str(tile)))
-                await player.user.send("here's your tiles:\n" + text)
-                if player.user.name == GameHolder.Game[ctx.guild].first_player.user.name:
-                    await player.user.send("your are the first player")
-
-                feedback += "<@" + str(player.user.id) + ">"
-
-            await ctx.send(feedback + "\nthe game has started,\n" + GameHolder.Game[ctx.guild].first_player.user.name + " is the first player")
-
-            await TurnsAlogrithms.first_turn(ctx=ctx)
+                await TurnsAlogrithms.first_turn(ctx=ctx)
+            else: await ctx.send("You need at least 2 players to play majiang")
 
         else:
             GameHolder.Game[ctx.guild] = GameHolder.GameHolder()
             starting[ctx.guild] = True
+            GameHolder.Game[ctx.guild].player_list.append(Player(ctx.message.author))
             await ctx.send("starting game,\ntype \"join\" to join the game:")
     else:
         await ctx.send("A game is already in progress")
@@ -161,11 +97,17 @@ async def on_message(message):
         if not message.author.bot:
             if starting[message.guild]:
                 if message.content == "join":
-                    if not Player(message.author) in GameHolder.Game[message.guild].player_list:
-                        GameHolder.Game[message.guild].player_list.append(Player(message.author))
-                        await message.channel.send(message.author.name+" successfully registered")
-                        if len(GameHolder.Game[message.guild].player_list) == 4:
-                            await message.channel.send("type \"!start\" to start the game")
+                    is_user_registered = False
+                    for player in GameHolder.Game[message.guild].player_list:
+                        if player.user.id == message.author.id:
+                            is_user_registered = True
+                    if not is_user_registered:
+                        if len(GameHolder.Game[message.guild].player_list) != 4:
+                            GameHolder.Game[message.guild].player_list.append(Player(message.author))
+                            await message.channel.send(message.author.name+" successfully registered")
+                            if len(GameHolder.Game[message.guild].player_list) == 4:
+                                await message.channel.send("type \"!start\" to start the game")
+                        else: await message.channel.send("there are already 4 players registered")
                     else:
                         await message.channel.send("your are already in !")
     else:

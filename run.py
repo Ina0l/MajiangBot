@@ -7,7 +7,6 @@ import MajiangBot
 def launch() -> None:
     global launching_root
     launching_root.destroy()
-
     MajiangBot.launch_bot()
 
 def destroy() -> None:

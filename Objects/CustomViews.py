@@ -3,7 +3,6 @@ from typing import Any, Optional
 
 import discord
 from discord import SelectOption, ButtonStyle, Interaction
-from discord._types import ClientT
 from discord.ext.commands import Context
 
 from Methods import Emojis
@@ -57,11 +56,13 @@ class ThrowSelection(discord.ui.Select):
 
 async def win_check(button):
     button.view.stop()
+    button.view.is_winning = True
 
 class ChooseToWinView(discord.ui.View):
     def __init__(self, user: discord.abc.Messageable):
         super().__init__()
         self.user = user
+        self.is_winning = False
         self.add_item(IsWinningButton())
         self.add_item(IsntWinningButton())
 
@@ -73,7 +74,7 @@ class IsWinningButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="Yes", style=ButtonStyle.green)
 
-    async def callback(self, interaction: Interaction[ClientT]) -> Any:
+    async def callback(self, interaction: Interaction) -> Any:
         await self.view.user.send("You chose to win")
         await win_check(self)
 
@@ -81,10 +82,28 @@ class IsntWinningButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="No", style=ButtonStyle.red)
 
-    async def callback(self, interaction: Interaction[ClientT]) -> Any:
+    async def callback(self, interaction: Interaction) -> Any:
         await self.view.user.send("You aren't winning")
         self.view.stop()
 
 class TakeView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, next_player: Player, thrown_tile: Tile.Tile):
+        self.next_player = next_player
+        self.thrown_tile = thrown_tile
+        self.add_item(TakeButton())
+        self.add_item(DontTakeButton())
         super().__init__()
+
+class TakeButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Take", style=ButtonStyle.green)
+
+    async def callback(self, interaction: Interaction) -> Any:
+        pass
+
+class DontTakeButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Don't take", style=ButtonStyle.red)
+
+    async def callback(self, interaction: Interaction) -> Any:
+        pass
