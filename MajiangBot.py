@@ -1,7 +1,4 @@
 import discord
-
-from discord.ext.commands import Context
-
 import Bot
 import TurnsAlogrithms
 import Objects.GameHolder as GameHolder
@@ -12,7 +9,6 @@ bot = Bot.bot
 
 starting: dict[discord.Guild: bool] = {}
 In_Game: dict[discord.Guild: bool] = {}
-
 
 def launch_bot(): bot.run(Bot.token)
 
@@ -53,7 +49,7 @@ async def start(interaction):
         await interaction.response.send_message("A game is already in progress")
 
 @bot.command()
-async def start(ctx: Context):
+async def start(ctx):
     global starting
     global In_Game
 

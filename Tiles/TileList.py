@@ -13,8 +13,6 @@ def get_every_tiles(tile_lists: list["TileList"]) -> "TileList":
     return tiles
 
 
-
-
 class TileList:
     def __init__(self, tiles: list[Tile]):
         self.tiles: list[Tile] = tiles
@@ -30,7 +28,7 @@ class TileList:
 
     def get_tile_by_name(self, name: str) -> Tile:
         if not name[0].isnumeric():
-            raise TypeError("name must start with a number")
+            raise TypeError("name must start with a digit")
         else:
             for tile in self.tiles:
                 if "_" in name:
@@ -44,14 +42,14 @@ class TileList:
     def append(self, tile: Tile) -> None:
         self.tiles.append(tile)
 
-    def remove(self, tile: Tile) -> None:
-        self.tiles.remove(tile)
+    def remove(self, removing_tile: Tile) -> None:
+        for tile in self.tiles:
+            if removing_tile.matches_tile(tile): self.tiles.remove(tile)
 
     def count(self, tile_to_count: Tile) -> int:
         tile_nb: int = 0
         for tile in self.tiles:
-            if tile.matches_tile(tile_to_count):
-                tile_nb += 1
+            if tile.matches_tile(tile_to_count): tile_nb += 1
         return tile_nb
 
     def get_family(self, family: Families) -> list[Tile]:

@@ -1,5 +1,4 @@
-from tkinter import *
-from tkinter import ttk
+from tkinter import Tk, Frame, N, S, E, W, ttk
 
 import MajiangBot
 

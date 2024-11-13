@@ -1,3 +1,4 @@
+import Objects.Families
 from Objects.Families import *
 from random import randint
 
@@ -60,7 +61,7 @@ class DrawPile:
                     if tile_nb_total < index:
                         pass
                     else:
-                        return Tile(family, tile_nb)
+                        return Tile(Objects.Families.get_family(family), tile_nb)
                 tile_nb += 1
 
     def draw(self) -> Tile:

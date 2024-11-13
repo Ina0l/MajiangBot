@@ -23,17 +23,18 @@ class ThrownPile:
     def __str__(self):
         self.tiles.sort()
         tile_list = []
-        temporary_tile_list = ""
+        temporary_tile_list = []
         for tile in self.tiles.tiles:
             if len(temporary_tile_list) < 6:
-                temporary_tile_list += get_emoji(str(tile))
+                temporary_tile_list.append(get_emoji(str(tile)))
             else:
                 tile_list.append(temporary_tile_list)
-                temporary_tile_list = get_emoji(str(tile))
+                temporary_tile_list = [get_emoji(str(tile))]
         tile_list.append(temporary_tile_list)
 
-        tiles_string = ""
-        for string in tile_list:
-            tiles_string += string
-            tiles_string += "\n"
-        return tiles_string[:-1]
+        tile_str = ""
+        for tiles in tile_list:
+            temp_tiles_str = ""
+            for tile in tiles: temp_tiles_str += tile
+            tile_str += (temp_tiles_str + "\n")
+        return tile_str[:-1]

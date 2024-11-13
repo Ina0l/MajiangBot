@@ -18,8 +18,6 @@ def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile):
         GameHolder.Game[ctx.guild].throwed_tiles.append(tile)
         GameHolder.Game[ctx.guild].throwed_tiles.last_thrown_tile = tile
 
-async def set_combo():
-    pass
 
 class ThrowView(discord.ui.View):
     def __init__(self, *, ctx: Context, player: Player):
@@ -32,7 +30,6 @@ class ThrowView(discord.ui.View):
     def on_timeout(self) -> None:
         self.thrown_tile = choice(self.player.tiles.tiles)
         throwing_tile(self.player, self.ctx, self.thrown_tile)
-        self.stop()
 
 
 class ThrowSelection(discord.ui.Select):
@@ -67,7 +64,6 @@ class ChooseToWinView(discord.ui.View):
 
     async def on_timeout(self) -> None:
         await self.user.send("You aren't winning")
-        self.stop()
 
 class IsWinningButton(discord.ui.Button):
     def __init__(self):
@@ -86,18 +82,25 @@ class IsntWinningButton(discord.ui.Button):
         self.view.stop()
 
 class TakeView(discord.ui.View):
-    def __init__(self, next_player: Player, thrown_tile: Tile.Tile):
+    def __init__(self, is_chi_player: bool, player: Player, thrown_tile: Tile.Tile, ctx: Context):
         super().__init__()
-        self.next_player = next_player
-        self.thrown_tile = thrown_tile
-        self.add_item(TakeButton()).add_item(DontTakeButton())
+        self.result_combo: Optional[list[Tile.Tile]] = None
+        self.add_item(TakeButton(thrown_tile, player, is_chi_player, ctx)).add_item(DontTakeButton())
 
 class TakeButton(discord.ui.Button):
-    def __init__(self):
+    def __init__(self, thrown_tile: Tile.Tile, player: Player, is_chi_player: bool, ctx: Context):
+        self.thrown_tile = thrown_tile
+        self.player = player
+        self.is_chi_player = is_chi_player
+        self.ctx = ctx
         super().__init__(label="Take", style=ButtonStyle.green)
 
     async def callback(self, interaction: Interaction) -> Any:
-        pass
+        combo_select_view = ComboSelectionView(self.thrown_tile, self.player, self.is_chi_player, self.ctx)
+        await interaction.response.send_message("how are you gonna take this tile ?", view=combo_select_view)
+        await combo_select_view.wait()
+        self.view.result_combo = combo_select_view.result_combo
+        self.view.stop()
 
 class DontTakeButton(discord.ui.Button):
     def __init__(self):
@@ -106,3 +109,97 @@ class DontTakeButton(discord.ui.Button):
     async def callback(self, interaction: Interaction) -> Any:
         self.view.stop()
         await interaction.response.send_message("you chose not to take this tile")
+
+class ComboSelectionView(discord.ui.View):
+    def __init__(self, thrown_tile: Tile.Tile, player: Player, is_chi_player: bool, ctx: Context):
+        super().__init__()
+        self.result_combo: Optional[list[Tile.Tile]] = None
+        self.thrown_tile = thrown_tile
+        self.add_item(ComboSelect(thrown_tile, player, is_chi_player, ctx))
+
+class ComboSelect(discord.ui.Select):
+    def __init__(self, thrown_tile: Tile.Tile, player: Player, is_chi_player: bool, ctx: Context):
+        self.thrown_tile = thrown_tile
+        self.player = player
+        self.is_chi_player = is_chi_player
+        self.ctx = ctx
+        options: list[discord.SelectOption] = []
+        if player.tiles.count(thrown_tile) == 3: options.append(discord.SelectOption(label=(thrown_tile.get_name()+" ")*3, emoji=Emojis.get_emoji(str(thrown_tile)), description="Kong"))
+        if player.tiles.count(thrown_tile) >=2: options.append(discord.SelectOption(label=(thrown_tile.get_name()+" ")*2, emoji=Emojis.get_emoji(str(thrown_tile)), description="Pong"))
+        if (not thrown_tile.is_special) and is_chi_player:
+            has_one_less = (False if thrown_tile.nb==1 else player.tiles.has_tile(Tile.Tile(thrown_tile.family, thrown_tile.nb-1)))
+            has_two_less = (False if not has_one_less else (False if thrown_tile.nb==2 else player.tiles.has_tile(Tile.Tile(thrown_tile.family, thrown_tile.nb-2))))
+            has_one_more = (False if thrown_tile.nb==9 else player.tiles.has_tile(Tile.Tile(thrown_tile.family, thrown_tile.nb+1)))
+            has_two_more = (False if not has_one_more else (False if thrown_tile.nb==8 else player.tiles.has_tile(Tile.Tile(thrown_tile.family, thrown_tile.nb+2))))
+
+            if has_one_less and has_two_less: options.append(discord.SelectOption(label=Tile.Tile(thrown_tile.family, thrown_tile.nb-1).get_name()
+                                                                                        +" "+Tile.Tile(thrown_tile.family, thrown_tile.nb-2).get_name(),
+                                                                                        emoji=Emojis.get_emoji(str(thrown_tile)), description="Chi"))
+            if has_one_less and has_one_more: options.append(discord.SelectOption(label=Tile.Tile(thrown_tile.family, thrown_tile.nb-1).get_name()
+                                                                                        +" "+Tile.Tile(thrown_tile.family, thrown_tile.nb+1).get_name(),
+                                                                                        emoji=Emojis.get_emoji(str(thrown_tile)), description="Chi"))
+            if has_one_more and has_two_more: options.append(discord.SelectOption(label=Tile.Tile(thrown_tile.family, thrown_tile.nb+1).get_name()
+                                                                                        +" "+Tile.Tile(thrown_tile.family, thrown_tile.nb+2).get_name(),
+                                                                                        emoji=Emojis.get_emoji(str(thrown_tile)), description="Chi"))
+        options.append(discord.SelectOption(label="Don't take", emoji="❌", description="Choose to finally not take the tile"))
+        super().__init__(placeholder="choose a combination", options=options)
+
+    async def callback(self, interaction: Interaction) -> Any:
+        one_less_authorized = self.thrown_tile.nb > 1
+        two_less_authorized = self.thrown_tile.nb > 2
+        one_more_authorized = self.thrown_tile.nb < 9
+        two_more_authorized = self.thrown_tile.nb < 8
+
+        if self.values[0] == ((self.thrown_tile.get_name()+" ")*3)[:-1]:
+            for a in range(3): self.player.tiles.remove(self.thrown_tile)
+            for a in range(4): self.player.shown_tiles.append(self.thrown_tile)
+
+            self.view.result_combo = [self.thrown_tile for a in range(4)]
+            tile = GameHolder.Game[self.ctx.guild].draw_pile.draw()
+            GameHolder.Game[self.ctx.guild].draw_pile.remove_tile(tile)
+            self.player.add_tile(tile)
+            await interaction.response.send_message("Kong")
+
+        elif self.values[0] == ((self.thrown_tile.get_name()+" ")*2)[:-1]:
+            for a in range(2): self.player.tiles.remove(self.thrown_tile)
+            for a in range(3): self.player.shown_tiles.append(self.thrown_tile)
+
+            self.view.result_combo = [self.thrown_tile for a in range(3)]
+            await interaction.response.send_message("Pong")
+
+        elif one_less_authorized and two_less_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-2).get_name()):
+            self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
+            self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2))
+            self.player.shown_tiles.append(self.thrown_tile)
+
+            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
+            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2))
+
+            self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2)]
+            await interaction.response.send_message("Chi")
+
+        elif one_less_authorized and one_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()):
+            self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
+            self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
+            self.player.shown_tiles.append(self.thrown_tile)
+
+            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
+            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
+
+            self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1)]
+            await interaction.response.send_message("Chi")
+
+        elif one_more_authorized and two_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+2).get_name()):
+            self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
+            self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2))
+            self.player.shown_tiles.append(self.thrown_tile)
+
+            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
+            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2))
+
+            self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2)]
+            await interaction.response.send_message("Chi")
+
+        elif self.values[0] == "Don't take":
+            await interaction.response.send_message("you chose no to take the tile")
+        self.view.stop()

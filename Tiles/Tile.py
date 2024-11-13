@@ -5,7 +5,7 @@ jian_names: dict[int: str] = {1: "zhong", 2: "fa", 3: "bai"}
 
 
 class Tile:
-    def __init__(self, family: str, nb: int):
+    def __init__(self, family: Families, nb: int):
         self.family = family
         self.is_special = self.family in [Families.FENG, Families.JIAN]
         if not self.is_special:
@@ -39,5 +39,4 @@ class Tile:
         else:
             return jian_names[self.nb]
 
-    def matches_tile(self, tile: "Tile") -> bool:
-        return str(self) == str(tile)
+    def matches_tile(self, tile: "Tile") -> bool: return str(self) == str(tile)

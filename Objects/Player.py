@@ -33,5 +33,10 @@ class Player:
         self.throw_tile(tile)
         self.shown_tiles.append(tile)
 
-    def does_win(self) -> bool:
-        pass
+    def kong_check(self) -> None:
+        for tile in self.tiles:
+            if self.tiles.count(tile) == 4:
+                for a in range(4): self.tiles.remove(tile)
+                for a in range(4): self.shown_tiles.append(Tile(tile.family, tile.nb))
+                self.kong_check()
+                break
