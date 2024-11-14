@@ -25,7 +25,7 @@ class SortingObject:
             if tile.nb == 5:
                 self.list_5.append(tile)
             if tile.nb == 6:
-                self.list_5.append(tile)
+                self.list_6.append(tile)
             if tile.nb == 7:
                 self.list_7.append(tile)
             if tile.nb == 8:
