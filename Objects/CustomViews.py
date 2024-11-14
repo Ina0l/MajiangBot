@@ -8,6 +8,7 @@ from discord.ext.commands import Context
 from Methods import Emojis
 from Methods.Emojis import get_emoji
 import Objects.GameHolder as GameHolder
+from Objects import Families
 from Objects.Player import Player
 from Tiles import Tile
 
@@ -85,6 +86,7 @@ class TakeView(discord.ui.View):
     def __init__(self, is_chi_player: bool, player: Player, thrown_tile: Tile.Tile, ctx: Context):
         super().__init__()
         self.result_combo: Optional[list[Tile.Tile]] = None
+        self.result_combo_type: Optional[Families.ComboTypes] = None
         self.add_item(TakeButton(thrown_tile, player, is_chi_player, ctx)).add_item(DontTakeButton())
 
 class TakeButton(discord.ui.Button):
@@ -100,6 +102,7 @@ class TakeButton(discord.ui.Button):
         await interaction.response.send_message("how are you gonna take this tile ?", view=combo_select_view)
         await combo_select_view.wait()
         self.view.result_combo = combo_select_view.result_combo
+        self.view.result_combo_type = combo_select_view.result_combo_type
         self.view.stop()
 
 class DontTakeButton(discord.ui.Button):
@@ -114,6 +117,7 @@ class ComboSelectionView(discord.ui.View):
     def __init__(self, thrown_tile: Tile.Tile, player: Player, is_chi_player: bool, ctx: Context):
         super().__init__()
         self.result_combo: Optional[list[Tile.Tile]] = None
+        self.result_combo_type: Optional[Families.ComboTypes] = None
         self.thrown_tile = thrown_tile
         self.add_item(ComboSelect(thrown_tile, player, is_chi_player, ctx))
 
@@ -155,6 +159,7 @@ class ComboSelect(discord.ui.Select):
             for a in range(4): self.player.shown_tiles.append(self.thrown_tile)
 
             self.view.result_combo = [self.thrown_tile for a in range(4)]
+            self.view.result_combo_type = Families.ComboTypes.KONG
             tile = GameHolder.Game[self.ctx.guild].draw_pile.draw()
             GameHolder.Game[self.ctx.guild].draw_pile.remove_tile(tile)
             self.player.add_tile(tile)
@@ -165,6 +170,7 @@ class ComboSelect(discord.ui.Select):
             for a in range(3): self.player.shown_tiles.append(self.thrown_tile)
 
             self.view.result_combo = [self.thrown_tile for a in range(3)]
+            self.view.result_combo_type = Families.ComboTypes.PONG
             await interaction.response.send_message("Pong")
 
         elif one_less_authorized and two_less_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-2).get_name()):
@@ -176,6 +182,7 @@ class ComboSelect(discord.ui.Select):
             self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2))
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2)]
+            self.view.result_combo_type = Families.ComboTypes.CHI
             await interaction.response.send_message("Chi")
 
         elif one_less_authorized and one_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()):
@@ -187,6 +194,7 @@ class ComboSelect(discord.ui.Select):
             self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1)]
+            self.view.result_combo_type = Families.ComboTypes.CHI
             await interaction.response.send_message("Chi")
 
         elif one_more_authorized and two_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+2).get_name()):
@@ -198,6 +206,7 @@ class ComboSelect(discord.ui.Select):
             self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2))
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2)]
+            self.view.result_combo_type = Families.ComboTypes.CHI
             await interaction.response.send_message("Chi")
 
         elif self.values[0] == "Don't take":

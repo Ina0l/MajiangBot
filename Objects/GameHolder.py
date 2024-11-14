@@ -17,14 +17,16 @@ class GameHolder:
         self.throwed_tiles: ThrownPile = ThrownPile()
         self.first_player: Optional[Player] = None
 
-    def get_player_by_discord_user(self, user: discord.user.User) -> discord.user.User:
+    def get_player_by_discord_user(self, user: discord.user.User) -> Player:
         for player in self.player_list:
             if player.user == user:
-                return user
+                return player
         raise Exception(user.name+" not in this game")
 
     def throw_tile(self, tile: Tile):
         self.throwed_tiles.append(tile)
+
+    def get_user_list(self) -> list[discord.user.User]: return [player.user for player in self.player_list]
 
     def set_first_player(self):
         self.first_player: Player = choice(self.player_list)

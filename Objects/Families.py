@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import StrEnum, Enum
 
 
 class Families(StrEnum):
@@ -19,3 +19,13 @@ def get_family(family: str) -> Families:
         return Families.FENG
     if family == "jian":
         return Families.JIAN
+
+class ComboTypes(Enum):
+    CHI = 1
+    PONG = 2
+    KONG = 3
+
+def get_combo_type(combo_type: ComboTypes) -> str:
+    if combo_type == ComboTypes.CHI: return "Chi"
+    if combo_type == ComboTypes.PONG: return "Pong"
+    if combo_type == ComboTypes.KONG: return "Kong"

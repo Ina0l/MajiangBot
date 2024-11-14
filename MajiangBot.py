@@ -3,6 +3,7 @@ import Bot
 import TurnsAlogrithms
 import Objects.GameHolder as GameHolder
 from Objects.Player import Player
+from Methods import Emojis
 
 
 bot = Bot.bot
@@ -33,9 +34,11 @@ async def start(interaction):
             starting.update({interaction.guild: False})
 
         if starting[interaction.guild]:
-            if len(GameHolder.Game[interaction.guild].player_list) > 0:
+            if len(GameHolder.Game[interaction.guild].player_list) > 1:
                 starting.update({interaction.guild: False})
                 In_Game.update({interaction.guild: True})
+
+                await interaction.response.defer()
 
                 await TurnsAlogrithms.first_turn(interaction=interaction)
             else: await interaction.response.send_message("You need at least 2 players to player majiang")
@@ -78,6 +81,32 @@ async def start(ctx):
     else:
         await ctx.send("A game is already in progress")
 
+@bot.command()
+async def see(ctx, literal: str, user: discord.User):
+    if not literal in ["tile","tiles"]:
+        return
+    if not ctx.guild in GameHolder.Game.keys():
+        await ctx.send("<@"+str(ctx.message.author.id)+"> There\'s no game in progress")
+        return
+    if not user in GameHolder.Game[ctx.guild].get_user_list():
+        await ctx.send("<@"+str(ctx.message.author.id)+"> "+user.name+" is not in the majiang game")
+        return
+    await ctx.send("here are "+user.name+"\'s tiles")
+    await ctx.send(Emojis.get_emojis(GameHolder.Game[ctx.guild].get_player_by_discord_user(user).shown_tiles.get_str_list()))
+
+@bot.tree.command(name="see_tiles",
+                  description="Check an oppoment's visible tiles")
+async def see(interaction, literal: str, user: discord.User):
+    if not literal in ["tile","tiles"]:
+        return
+    if not interaction.guild not in GameHolder.Game.keys():
+        await interaction.response.send_message("<@"+str(interaction.message.author.id)+"> There\'s no game in progress")
+        return
+    if not user in GameHolder.Game[interaction.guild].get_user_list():
+        await interaction.response.send_message("<@"+str(interaction.message.author.id)+"> "+user.name+" is not in the majiang game")
+        return
+    await interaction.response.send_message("here are "+user.name+"\'s tiles")
+    await interaction.response.send_message(Emojis.get_emojis(GameHolder.Game[interaction.guild].get_player_by_discord_user(user).shown_tiles.get_str_list()))
 
 @bot.event
 async def on_message(message):

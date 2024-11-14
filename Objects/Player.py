@@ -2,6 +2,7 @@ from typing import Optional
 
 from discord import User
 
+from Objects import Families
 from Tiles.Tile import Tile
 from Tiles.TileList import TileList
 
@@ -12,10 +13,8 @@ class Player:
         self.score = 0
         self.tiles: TileList = TileList([])
         self.shown_tiles: TileList = TileList([])
-        self.combo_tiles: list[TileList] = []
-        self.not_combo_tiles: TileList = TileList([])
-        self.last_set_combo: Optional[TileList] = None
-        self.combos_nb: int
+        self.combo_tiles: Optional[TileList] = TileList([])
+        self.combo_type: Optional[Families.ComboTypes] = None
 
     def __str__(self):
         return self.user.name
