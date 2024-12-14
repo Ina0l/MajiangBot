@@ -12,17 +12,17 @@ class Tile:
             if 0 < nb < 10:
                 self.nb = nb
             else:
-                raise IndexError("tile "+family+" "+str(nb)+" is out of range")
+                raise IndexError(f"tile {family} {str(nb)} is out of range")
         elif family == Families.FENG:
             if 0 < nb <= 4:
                 self.nb = nb
             else:
-                raise IndexError("tile "+family+" "+str(nb)+" is out of range")
+                raise IndexError(f"tile {family} {str(nb)} is out of range")
         else:
             if 0 < nb <= 3:
                 self.nb = nb
             else:
-                raise IndexError("tile "+family+" "+str(nb)+" is out of range")
+                raise IndexError(f"tile {family} {str(nb)} is out of range")
 
     def __str__(self):
         string: str = ""
