@@ -11,6 +11,7 @@ import Objects.GameHolder as GameHolder
 from Objects import Families
 from Objects.Player import Player
 from Tiles import Tile
+from Tiles.TileList import TileList
 
 
 def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile):
@@ -48,30 +49,38 @@ class ThrowSelection(discord.ui.Select):
                 view: ThrowView = self.view
                 view.thrown_tile = tile
                 throwing_tile(self.player, self.ctx, tile)
-                await interaction.response.send_message("tile " + Emojis.get_emoji(str(tile)) + " thrown")
+                await interaction.response().send_message("tile " + Emojis.get_emoji(str(tile)) + " thrown")
         self.view.stop()
         self.disabled = True
 
 async def win_check(button):
     button.view.stop()
     button.view.is_winning = True
+    # for tile_index in range(len(button.view.player.shown_tiles)):
+    #     if len(button.view.player.shown_tiles) - tile_index > 2:
+    #         tile_plus_one = button.view.player.shown_tiles[tile_index].matches_tile(button.view.player.shown_tiles[tile_index + 1])
+    #         tile_plus_two = button.view.player.shown_tiles[tile_index].matches_tile(button.view.player.shown_tiles[tile_index + 2])
+    #         tile_plus_three = (len(button.view.player.shown_tiles) - tile_index > 3) and button.view.player.shown_tiles[tile_index].matches_tile(button.view.player.shown_tiles[tile_index + 3])
+    #         if tile_plus_one and tile_plus_two:
+    #             if tile_plus_three:
+    #                 pass
 
 class ChooseToWinView(discord.ui.View):
-    def __init__(self, user: discord.abc.Messageable):
+    def __init__(self, player: Player):
         super().__init__()
-        self.user = user
+        self.player = player
         self.is_winning = False
         self.add_item(IsWinningButton()).add_item(IsntWinningButton())
 
     async def on_timeout(self) -> None:
-        await self.user.send("You aren't winning")
+        await self.player.user.send("You aren't winning")
 
 class IsWinningButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="Yes", style=ButtonStyle.green)
 
     async def callback(self, interaction: Interaction) -> Any:
-        await interaction.response.send_message("You chose to win")
+        await interaction.response().send_message("You chose to win")
         await win_check(self)
 
 class IsntWinningButton(discord.ui.Button):
@@ -79,7 +88,7 @@ class IsntWinningButton(discord.ui.Button):
         super().__init__(label="No", style=ButtonStyle.red)
 
     async def callback(self, interaction: Interaction) -> Any:
-        await interaction.response.send_message("You aren't winning")
+        await interaction.response().send_message("You aren't winning")
         self.view.stop()
 
 class TakeView(discord.ui.View):
@@ -99,7 +108,7 @@ class TakeButton(discord.ui.Button):
 
     async def callback(self, interaction: Interaction) -> Any:
         combo_select_view = ComboSelectionView(self.thrown_tile, self.player, self.is_chi_player, self.ctx)
-        await interaction.response.send_message("how are you gonna take this tile ?", view=combo_select_view)
+        await interaction.response().send_message("how are you gonna take this tile ?", view=combo_select_view)
         await combo_select_view.wait()
         self.view.result_combo = combo_select_view.result_combo
         self.view.result_combo_type = combo_select_view.result_combo_type
@@ -111,7 +120,7 @@ class DontTakeButton(discord.ui.Button):
 
     async def callback(self, interaction: Interaction) -> Any:
         self.view.stop()
-        await interaction.response.send_message("you chose not to take this tile")
+        await interaction.response().send_message("you chose not to take this tile")
 
 class ComboSelectionView(discord.ui.View):
     def __init__(self, thrown_tile: Tile.Tile, player: Player, is_chi_player: bool, ctx: Context):
@@ -156,59 +165,50 @@ class ComboSelect(discord.ui.Select):
 
         if self.values[0] == ((self.thrown_tile.get_name()+" ")*3)[:-1]:
             for a in range(3): self.player.tiles.remove(self.thrown_tile)
-            for a in range(4): self.player.shown_tiles.append(self.thrown_tile)
+            self.player.shown_tiles.append(TileList([self.thrown_tile]*4))
 
-            self.view.result_combo = [self.thrown_tile for a in range(4)]
+            self.view.result_combo = [self.thrown_tile]*4
             self.view.result_combo_type = Families.ComboTypes.KONG
             tile = GameHolder.Game[self.ctx.guild].draw_pile.draw()
             GameHolder.Game[self.ctx.guild].draw_pile.remove_tile(tile)
             self.player.add_tile(tile)
-            await interaction.response.send_message("Kong")
+            await interaction.response().send_message("Kong")
 
         elif self.values[0] == ((self.thrown_tile.get_name()+" ")*2)[:-1]:
             for a in range(2): self.player.tiles.remove(self.thrown_tile)
-            for a in range(3): self.player.shown_tiles.append(self.thrown_tile)
+            self.player.shown_tiles.append(TileList([self.thrown_tile]*3))
 
-            self.view.result_combo = [self.thrown_tile for a in range(3)]
+            self.view.result_combo = [self.thrown_tile]*3
             self.view.result_combo_type = Families.ComboTypes.PONG
-            await interaction.response.send_message("Pong")
+            await interaction.response().send_message("Pong")
 
         elif one_less_authorized and two_less_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-2).get_name()):
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2))
-            self.player.shown_tiles.append(self.thrown_tile)
-
-            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
-            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2))
+            self.player.shown_tiles.append(TileList([self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2)]))
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2)]
             self.view.result_combo_type = Families.ComboTypes.CHI
-            await interaction.response.send_message("Chi")
+            await interaction.response().send_message("Chi")
 
         elif one_less_authorized and one_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()):
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
-            self.player.shown_tiles.append(self.thrown_tile)
-
-            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
-            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
+            self.player.shown_tiles.append(TileList([self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1)]))
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1)]
             self.view.result_combo_type = Families.ComboTypes.CHI
-            await interaction.response.send_message("Chi")
+            await interaction.response().send_message("Chi")
 
         elif one_more_authorized and two_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+2).get_name()):
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2))
-            self.player.shown_tiles.append(self.thrown_tile)
-
-            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
-            self.player.shown_tiles.append(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2))
+            self.player.shown_tiles.append(TileList([self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2)]))
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2)]
             self.view.result_combo_type = Families.ComboTypes.CHI
-            await interaction.response.send_message("Chi")
+            await interaction.response().send_message("Chi")
 
         elif self.values[0] == "Don't take":
-            await interaction.response.send_message("you chose no to take the tile")
+            await interaction.response().send_message("you chose no to take the tile")
         self.view.stop()

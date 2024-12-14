@@ -92,7 +92,7 @@ async def see(ctx, literal: str, user: discord.User):
         await ctx.send("<@"+str(ctx.message.author.id)+"> "+user.name+" is not in the majiang game")
         return
     await ctx.send("here are "+user.name+"\'s tiles")
-    await ctx.send(Emojis.get_emojis(GameHolder.Game[ctx.guild].get_player_by_discord_user(user).shown_tiles.get_str_list()))
+    await ctx.send(Emojis.get_emojis(GameHolder.Game[ctx.guild].get_player_by_discord_user(user).get_shown_tiles().get_str_list()))
 
 @bot.tree.command(name="see_tiles",
                   description="Check an oppoment's visible tiles")
@@ -106,7 +106,7 @@ async def see(interaction, literal: str, user: discord.User):
         await interaction.response.send_message("<@"+str(interaction.message.author.id)+"> "+user.name+" is not in the majiang game")
         return
     await interaction.response.send_message("here are "+user.name+"\'s tiles")
-    await interaction.response.send_message(Emojis.get_emojis(GameHolder.Game[interaction.guild].get_player_by_discord_user(user).shown_tiles.get_str_list()))
+    await interaction.response.send_message(Emojis.get_emojis(GameHolder.Game[interaction.guild].get_player_by_discord_user(user).get_shown_tiles().get_str_list()))
 
 @bot.event
 async def on_message(message):

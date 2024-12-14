@@ -12,7 +12,7 @@ class Player:
         self.user: User = user
         self.score = 0
         self.tiles: TileList = TileList([])
-        self.shown_tiles: TileList = TileList([])
+        self.shown_tiles: list[TileList] = []
         self.combo_tiles: Optional[TileList] = TileList([])
         self.combo_type: Optional[Families.ComboTypes] = None
 
@@ -28,14 +28,15 @@ class Player:
         else:
             raise Exception("player: "+self.user.name+" does not have the tile: "+str(tile))
 
-    def show_tile(self, tile: Tile) -> None:
-        self.throw_tile(tile)
-        self.shown_tiles.append(tile)
-
     def kong_check(self) -> None:
         for tile in self.tiles:
             if self.tiles.count(tile) == 4:
                 for a in range(4): self.tiles.remove(tile)
-                for a in range(4): self.shown_tiles.append(Tile(tile.family, tile.nb))
+                self.shown_tiles.append(TileList([Tile(tile.family, tile.nb)]*4))
                 self.kong_check()
                 break
+
+    def get_shown_tiles(self) -> TileList:
+        a=[]
+        for i in self.shown_tiles: a+=i.tiles
+        return TileList(a)

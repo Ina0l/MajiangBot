@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Self, Union
 
 from Objects.Families import Families, get_family
 from Tiles.SortingObject import SortingObject
@@ -17,14 +17,16 @@ class TileList:
     def __init__(self, tiles: list[Tile]):
         self.tiles: list[Tile] = tiles
 
-    def __getitem__(self, item: str|int):
-        if type(item) == "<class 'str'>":
+    def __getitem__(self, item: str|int) -> Union[Tile, Self, IndexError]:
+        if type(item) == str:
             if item in Families:
                 return self.get_family(get_family(str(item)))
             else:
                 return IndexError(item+" doesn't exist in this TileList")
         else:
             return self.tiles[item]
+
+    def __len__(self): return len(self.tiles)
 
     def get_tile_by_name(self, name: str) -> Tile:
         if not name[0].isnumeric():

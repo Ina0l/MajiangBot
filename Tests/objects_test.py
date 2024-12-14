@@ -1,4 +1,4 @@
-from Tiles import TileList, DrawPile, Tile
+from Tiles import TileList, Tile
 from Objects import Families
 
 # tiles = TileList.TileList([])

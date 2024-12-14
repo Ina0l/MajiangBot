@@ -13,7 +13,7 @@ from Tiles import Tile, TileList
 async def send_tiles(player: Player):
     await player.user.send("Here are all your tiles:")
     player.tiles.sort()
-    if len(player.shown_tiles.get_str_list())!=0: await player.user.send(Emojis.get_emojis(player.shown_tiles.get_str_list()))
+    if len(player.get_shown_tiles().get_str_list())!=0: await player.user.send(Emojis.get_emojis(player.get_shown_tiles().get_str_list()))
     await player.user.send(Emojis.get_emojis(player.tiles.get_str_list()))
 
 
@@ -58,7 +58,7 @@ async def first_turn(interaction: Optional[discord.Interaction] = None, ctx: Opt
     else:
         await interaction.followup.send(feedback + "\nthe game has started,\n" + GameHolder.Game[ctx.guild].first_player.user.name + " is the first player")
 
-    is_winning_view: CustomViews.ChooseToWinView = CustomViews.ChooseToWinView(GameHolder.Game[ctx.guild].player_list[0].user)
+    is_winning_view: CustomViews.ChooseToWinView = CustomViews.ChooseToWinView(GameHolder.Game[ctx.guild].player_list[0])
     await GameHolder.Game[ctx.guild].player_list[0].user.send("Are you currently winning ?", view=is_winning_view)
     await is_winning_view.wait()
 
@@ -111,7 +111,7 @@ async def first_turn(interaction: Optional[discord.Interaction] = None, ctx: Opt
         await turn(GameHolder.Game[ctx.guild].player_list[1], ctx)
     else:
         await ctx.channel.send("<@"+str(GameHolder.Game[ctx.guild].player_list[0].user.id)+"> won !")
-        await ctx.channel.send(Emojis.get_emojis(GameHolder.Game[ctx.guild].player_list[0].shown_tiles.get_str_list()))
+        await ctx.channel.send(Emojis.get_emojis(GameHolder.Game[ctx.guild].player_list[0].get_shown_tiles().get_str_list()))
         await ctx.channel.send(Emojis.get_emojis(GameHolder.Game[ctx.guild].player_list[0].tiles.get_str_list()))
 
 async def turn(player: Player, ctx: context.Context) -> None:
@@ -128,7 +128,7 @@ async def turn(player: Player, ctx: context.Context) -> None:
 
     await send_tiles(player)
 
-    is_winning_view: CustomViews.ChooseToWinView = CustomViews.ChooseToWinView(GameHolder.Game[ctx.guild].player_list[0].user)
+    is_winning_view: CustomViews.ChooseToWinView = CustomViews.ChooseToWinView(GameHolder.Game[ctx.guild].player_list[0])
     await GameHolder.Game[ctx.guild].player_list[0].user.send("Are you currently winning ?", view=is_winning_view)
     await is_winning_view.wait()
 
@@ -182,7 +182,7 @@ async def turn(player: Player, ctx: context.Context) -> None:
         await turn(GameHolder.Game[ctx.guild].player_list[1], ctx)
     else:
         await ctx.channel.send("<@" + str(GameHolder.Game[ctx.guild].player_list[0].user.id) + "> won !")
-        await ctx.channel.send(Emojis.get_emojis([str(tile) for tile in GameHolder.Game[ctx.guild].player_list[0].shown_tiles.tiles]))
+        await ctx.channel.send(Emojis.get_emojis([str(tile) for tile in GameHolder.Game[ctx.guild].player_list[0].get_shown_tiles().tiles]))
         await ctx.channel.send(Emojis.get_emojis([str(tile) for tile in GameHolder.Game[ctx.guild].player_list[0].tiles.tiles]))
 
 async def taking_turn(player: Player, ctx: context.Context) -> None:
@@ -191,7 +191,7 @@ async def taking_turn(player: Player, ctx: context.Context) -> None:
 
     await send_tiles(player)
 
-    is_winning_view: CustomViews.ChooseToWinView = CustomViews.ChooseToWinView(GameHolder.Game[ctx.guild].player_list[0].user)
+    is_winning_view: CustomViews.ChooseToWinView = CustomViews.ChooseToWinView(GameHolder.Game[ctx.guild].player_list[0])
     await GameHolder.Game[ctx.guild].player_list[0].user.send("Are you currently winning ?", view=is_winning_view)
     await is_winning_view.wait()
 
@@ -248,6 +248,6 @@ async def taking_turn(player: Player, ctx: context.Context) -> None:
     else:
         await ctx.channel.send("<@" + str(GameHolder.Game[ctx.guild].player_list[0].user.id) + "> won !")
         await ctx.channel.send(
-            Emojis.get_emojis([str(tile) for tile in GameHolder.Game[ctx.guild].player_list[0].shown_tiles.tiles]))
+            Emojis.get_emojis([str(tile) for tile in GameHolder.Game[ctx.guild].player_list[0].get_shown_tiles().tiles]))
         await ctx.channel.send(
             Emojis.get_emojis([str(tile) for tile in GameHolder.Game[ctx.guild].player_list[0].tiles.tiles]))
