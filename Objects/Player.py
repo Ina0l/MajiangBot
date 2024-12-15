@@ -15,6 +15,7 @@ class Player:
         self.shown_tiles: list[TileList] = []
         self.combo_tiles: Optional[TileList] = TileList([])
         self.combo_type: Optional[Families.ComboTypes] = None
+        self.win_tiles_list: TileList = TileList([])
 
     def __str__(self):
         return self.user.name

@@ -20,7 +20,6 @@ def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile):
         GameHolder.Game[ctx.guild].throwed_tiles.append(tile)
         GameHolder.Game[ctx.guild].throwed_tiles.last_thrown_tile = tile
 
-
 class ThrowView(discord.ui.View):
     def __init__(self, *, ctx: Context, player: Player):
         self.ctx = ctx
@@ -32,7 +31,6 @@ class ThrowView(discord.ui.View):
     def on_timeout(self) -> None:
         self.thrown_tile = choice(self.player.tiles.tiles)
         throwing_tile(self.player, self.ctx, self.thrown_tile)
-
 
 class ThrowSelection(discord.ui.Select):
     def __init__(self, ctx: Context, player: Player):
@@ -56,20 +54,20 @@ class ThrowSelection(discord.ui.Select):
 async def win_check(button):
     button.view.stop()
     button.view.is_winning = True
-    # for tile_index in range(len(button.view.player.shown_tiles)):
-    #     if len(button.view.player.shown_tiles) - tile_index > 2:
-    #         tile_plus_one = button.view.player.shown_tiles[tile_index].matches_tile(button.view.player.shown_tiles[tile_index + 1])
-    #         tile_plus_two = button.view.player.shown_tiles[tile_index].matches_tile(button.view.player.shown_tiles[tile_index + 2])
-    #         tile_plus_three = (len(button.view.player.shown_tiles) - tile_index > 3) and button.view.player.shown_tiles[tile_index].matches_tile(button.view.player.shown_tiles[tile_index + 3])
-    #         if tile_plus_one and tile_plus_two:
-    #             if tile_plus_three:
-    #                 pass
+    combos = button.view.player.shown_tiles
+    button.view.player.win_tiles_list = button.view.player.tiles
+    win_tiles_list: TileList = button.view.player.win_tiles_list
+    while len(combos) < 5:
+        pass
+    if win_tiles_list[0].matches_tile(win_tiles_list[1]):
+        button.view.win = True
 
 class ChooseToWinView(discord.ui.View):
     def __init__(self, player: Player):
         super().__init__()
         self.player = player
         self.is_winning = False
+        self.win = False
         self.add_item(IsWinningButton()).add_item(IsntWinningButton())
 
     async def on_timeout(self) -> None:
@@ -137,8 +135,10 @@ class ComboSelect(discord.ui.Select):
         self.is_chi_player = is_chi_player
         self.ctx = ctx
         options: list[discord.SelectOption] = []
-        if player.tiles.count(thrown_tile) == 3: options.append(discord.SelectOption(label=(thrown_tile.get_name()+" ")*3, emoji=Emojis.get_emoji(str(thrown_tile)), description="Kong"))
-        if player.tiles.count(thrown_tile) >=2: options.append(discord.SelectOption(label=(thrown_tile.get_name()+" ")*2, emoji=Emojis.get_emoji(str(thrown_tile)), description="Pong"))
+        if player.tiles.count(thrown_tile) == 3: options.append(discord.SelectOption(label=(thrown_tile.get_name()+" ")*3,
+                                                                                     emoji=Emojis.get_emoji(str(thrown_tile)), description="Kong"))
+        if player.tiles.count(thrown_tile) >=2: options.append(discord.SelectOption(label=(thrown_tile.get_name()+" ")*2,
+                                                                                    emoji=Emojis.get_emoji(str(thrown_tile)), description="Pong"))
         if (not thrown_tile.is_special) and is_chi_player:
             has_one_less = (False if thrown_tile.nb==1 else player.tiles.has_tile(Tile.Tile(thrown_tile.family, thrown_tile.nb-1)))
             has_two_less = (False if not has_one_less else (False if thrown_tile.nb==2 else player.tiles.has_tile(Tile.Tile(thrown_tile.family, thrown_tile.nb-2))))
@@ -212,3 +212,28 @@ class ComboSelect(discord.ui.Select):
         elif self.values[0] == "Don't take":
             await interaction.response().send_message("you chose no to take the tile")
         self.view.stop()
+
+class WinSelectionView(discord.ui.View):
+    def __init__(self, player: Player):
+        super().__init__()
+        self.player = player
+        self.add_item(WinSelection(self.player))
+        self.combo: Optional[TileList]
+
+class WinSelection(discord.ui.Select):
+    def __init__(self, player: Player):
+        self.player = player
+        options: list[SelectOption] = []
+        combos = player.combo_tiles.get_combinations()
+        for combo in combos:
+            options.append(SelectOption(label=combo.get_tiles_name(), emoji=Emojis.get_emoji(str(combo[0])), value=str(combo),
+                                        description=("Kong" if len(combo)==4 else ("Pong" if combo[0].matches_tile(combo[1]) else "Chi"))))
+        options.append(SelectOption(label="Don't win", emoji="❌", description="Choose not to continue making combos"))
+        super().__init__(placeholder="Choose a combo", options=options)
+
+    async def callback(self, interaction: Interaction) -> Any:
+        if self.values[0]=="Don't win":
+            self.view.combo = None
+        else:
+            #TODO:
+            pass

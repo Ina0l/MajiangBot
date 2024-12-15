@@ -28,21 +28,33 @@ class TileList:
 
     def __len__(self): return len(self.tiles)
 
-    def get_tile_by_name(self, name: str) -> Tile:
-        if not name[0].isnumeric():
+    def __str__(self):
+        _str = ""
+        for tile in self.tiles:
+            _str+=str(tile)+","
+            return _str
+
+    def get_tile_by_str(self, tile_str: str) -> Tile:
+        if not tile_str[0].isnumeric():
             raise TypeError("name must start with a digit")
         else:
             for tile in self.tiles:
-                if "_" in name:
-                    if str(tile) == name:
+                if "_" in tile_str:
+                    if str(tile) == tile_str:
                         return tile
                 else:
-                    if tile.get_name() == name:
+                    if str(tile) == tile_str:
                         return tile
-        raise TypeError("the name", name, "doesn't match the format for tile name or id")
+        raise TypeError("the id", tile_str, "doesn't match the format for tile name or id")
 
     def append(self, tile: Tile) -> None:
         self.tiles.append(tile)
+
+    def get_tiles_name(self):
+        name = ""
+        for tile in self.tiles:
+            name += tile.get_name() + ", "
+            return name
 
     def remove(self, removing_tile: Tile) -> None:
         for tile in self.tiles:
@@ -92,46 +104,31 @@ class TileList:
                 return True
         return False
 
-    def matches_list(self, tile_list: "TileList") -> bool:
-        matches = True
-        for tile in self.tiles:
-            for tile_to_check in tile_list.tiles:
-                if tile.matches_tile(tile_to_check):
-                    matches = False
-        return matches
+    def matches_list(self, tile_list: Self) -> bool:
+        for tile_index in range(len(self.tiles)):
+            if not self.tiles[tile_index].matches_tile(tile_list[tile_index]):
+                return False
+        return True
 
-    def is_tile_list_in_list(self, tile_list_list: list["TileList"]) -> bool:
-        is_in = False
+    def is_tile_list_in_list(self, tile_list_list: list[Self]) -> bool:
         for tile_list in tile_list_list:
             if self.matches_list(tile_list):
-                is_in = True
-        return is_in
+                return True
+        return False
 
-    def get_combinations(self) -> Optional[list["TileList"]]:
+    def get_combinations(self) -> list[Self]:
         tile_combinations: list[TileList] = []
-        for tile in self.tiles:
+        for tile in self.get_unique_tiles():
             if self.count(tile) >= 3:
-                if not TileList([tile, tile, tile]).is_tile_list_in_list(tile_combinations):
-                    tile_combinations.append(TileList([tile, tile, tile]))
+                tile_combinations.append(TileList([tile, tile, tile]))
             if self.count(tile) == 4:
-                if not TileList([tile, tile, tile]).is_tile_list_in_list(tile_combinations):
-                    tile_combinations.append(TileList([tile, tile, tile, tile]))
+                tile_combinations.append(TileList([tile, tile, tile, tile]))
 
             if not tile.is_special:
-                one_more_tile: Optional[Tile] = None
-                two_more_tile: Optional[Tile] = None
-                one_less_tile: Optional[Tile] = None
-                two_less_tile: Optional[Tile] = None
-
-                if not tile.nb > 8:
-                    one_more_tile = Tile(tile.family, tile.nb+1)
-                    if not tile.nb > 7:
-                        two_more_tile = Tile(tile.family, tile.nb+2)
-                if not tile.nb < 3:
-                    one_less_tile = Tile(tile.family, tile.nb-1)
-                    if not tile.nb < 2:
-                        two_less_tile = Tile(tile.family, tile.nb-2)
-
+                one_more_tile: Optional[Tile] = (None if tile.nb > 8 else Tile(tile.family, tile.nb+1))
+                two_more_tile: Optional[Tile] = (None if tile.nb > 7 else Tile(tile.family, tile.nb+2))
+                one_less_tile: Optional[Tile] = (None if tile.nb < 2 else Tile(tile.family, tile.nb-1))
+                two_less_tile: Optional[Tile] = (None if tile.nb < 3 else Tile(tile.family, tile.nb-2))
 
                 if (not one_more_tile is None) and one_more_tile in self.tiles:
                     if (not two_more_tile is None) and self.has_tile(two_more_tile):
@@ -147,12 +144,9 @@ class TileList:
                         if not TileList([two_less_tile, one_less_tile, tile]).is_tile_list_in_list(tile_combinations):
                             tile_combinations.append(TileList([two_less_tile, one_less_tile, tile]))
 
-                    if (not one_more_tile is None) and self.has_tile(one_more_tile):
-                        if not TileList([one_less_tile, tile, one_more_tile]).is_tile_list_in_list(tile_combinations):
-                            tile_combinations.append(TileList([one_less_tile, tile, one_more_tile]))
-        return None if len(tile_combinations) == 0 else tile_combinations
+        return tile_combinations
 
-    def get_unique_tiles(self) -> "TileList":
+    def get_unique_tiles(self) -> Self:
         unique_tiles = TileList([])
         for tile in self.tiles:
             is_tile_unique: bool = True
