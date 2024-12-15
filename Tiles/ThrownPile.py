@@ -10,10 +10,10 @@ class ThrownPile:
         self.tiles: TileList = TileList([])
         self.last_thrown_tile: Optional[Tile] = None
 
-    def append(self, tile: Tile):
+    def append(self, tile: Tile) -> None:
         self.tiles.append(tile)
 
-    def remove(self, tile: Tile):
+    def remove(self, tile: Tile) -> None:
         self.tiles.remove(tile)
 
     def takes_tile(self) -> None:

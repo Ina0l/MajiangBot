@@ -26,7 +26,7 @@ class TileList:
         else:
             return self.tiles[item]
 
-    def __len__(self): return len(self.tiles)
+    def __len__(self) -> int: return len(self.tiles)
 
     def __str__(self):
         _str = ""
@@ -50,7 +50,7 @@ class TileList:
     def append(self, tile: Tile) -> None:
         self.tiles.append(tile)
 
-    def get_tiles_name(self):
+    def get_tiles_name(self) -> str:
         name = ""
         for tile in self.tiles:
             name += tile.get_name() + ", "

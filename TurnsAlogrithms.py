@@ -10,7 +10,7 @@ from Objects.Player import Player
 from Tiles import Tile, TileList
 
 
-async def send_tiles(player: Player):
+async def send_tiles(player: Player) -> None:
     await player.user.send("Here are all your tiles:")
     player.tiles.sort()
     if len(player.get_shown_tiles().get_str_list())!=0: await player.user.send(Emojis.get_emojis(player.get_shown_tiles().get_str_list()))

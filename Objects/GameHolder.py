@@ -23,12 +23,12 @@ class GameHolder:
                 return player
         raise Exception(user.name+" not in this game")
 
-    def throw_tile(self, tile: Tile):
+    def throw_tile(self, tile: Tile) -> None:
         self.throwed_tiles.append(tile)
 
     def get_user_list(self) -> list[discord.user.User]: return [player.user for player in self.player_list]
 
-    def set_first_player(self):
+    def set_first_player(self) -> None:
         self.first_player: Player = choice(self.player_list)
         self.player_list.remove(self.first_player)
         self.player_list = [self.first_player]+self.player_list

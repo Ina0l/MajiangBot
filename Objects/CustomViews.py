@@ -14,7 +14,7 @@ from Tiles import Tile
 from Tiles.TileList import TileList
 
 
-def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile):
+def throwing_tile(player: Player, ctx: Context, tile: Tile.Tile) -> None:
         player.throw_tile(tile)
         GameHolder.Game[ctx.guild].draw_pile.remove_tile(tile)
         GameHolder.Game[ctx.guild].throwed_tiles.append(tile)
@@ -51,7 +51,7 @@ class ThrowSelection(discord.ui.Select):
         self.view.stop()
         self.disabled = True
 
-async def win_check(button):
+async def win_check(button) -> None:
     button.view.stop()
     button.view.is_winning = True
     combos = button.view.player.shown_tiles

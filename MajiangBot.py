@@ -11,7 +11,7 @@ bot = Bot.bot
 starting: dict[discord.Guild: bool] = {}
 In_Game: dict[discord.Guild: bool] = {}
 
-def launch_bot(): bot.run(Bot.token)
+def launch_bot() -> None: bot.run(Bot.token)
 
 @bot.event
 async def on_ready():
