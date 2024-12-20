@@ -1,19 +1,19 @@
-from Objects.Families import Families
+from Objects import Families
 
 feng_names: dict[int: str] = {1: "dong", 2: "nan", 3: "xi", 4: "bei"}
 jian_names: dict[int: str] = {1: "zhong", 2: "fa", 3: "bai"}
 
 
 class Tile:
-    def __init__(self, family: Families, nb: int):
+    def __init__(self, family: Families.Families, nb: int):
         self.family = family
-        self.is_special = self.family in [Families.FENG, Families.JIAN]
+        self.is_special = self.family in [Families.Families.FENG, Families.Families.JIAN]
         if not self.is_special:
             if 0 < nb < 10:
                 self.nb = nb
             else:
                 raise IndexError(f"tile {family} {str(nb)} is out of range")
-        elif family == Families.FENG:
+        elif family == Families.Families.FENG:
             if 0 < nb <= 4:
                 self.nb = nb
             else:

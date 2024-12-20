@@ -32,7 +32,7 @@ class TileList:
         _str = ""
         for tile in self.tiles:
             _str+=str(tile)+","
-            return _str
+        return _str[:-1]
 
     def get_tile_by_str(self, tile_str: str) -> Tile:
         if not tile_str[0].isnumeric():
@@ -54,7 +54,7 @@ class TileList:
         name = ""
         for tile in self.tiles:
             name += tile.get_name() + ", "
-            return name
+            return name[:-2]
 
     def remove(self, removing_tile: Tile) -> None:
         for tile in self.tiles:
@@ -130,7 +130,7 @@ class TileList:
                 one_less_tile: Optional[Tile] = (None if tile.nb < 2 else Tile(tile.family, tile.nb-1))
                 two_less_tile: Optional[Tile] = (None if tile.nb < 3 else Tile(tile.family, tile.nb-2))
 
-                if (not one_more_tile is None) and one_more_tile in self.tiles:
+                if (not one_more_tile is None) and  self.has_tile(one_more_tile):
                     if (not two_more_tile is None) and self.has_tile(two_more_tile):
                         if not TileList([tile, one_more_tile, two_more_tile]).is_tile_list_in_list(tile_combinations):
                             tile_combinations.append(TileList([tile, one_more_tile, two_more_tile]))
@@ -140,7 +140,7 @@ class TileList:
                             tile_combinations.append(TileList([one_less_tile, tile, one_more_tile]))
 
                 if (not one_less_tile is None) and self.has_tile(one_less_tile):
-                    if (not two_less_tile is None) and two_less_tile in self.tiles:
+                    if (not two_less_tile is None) and self.has_tile(two_less_tile):
                         if not TileList([two_less_tile, one_less_tile, tile]).is_tile_list_in_list(tile_combinations):
                             tile_combinations.append(TileList([two_less_tile, one_less_tile, tile]))
 

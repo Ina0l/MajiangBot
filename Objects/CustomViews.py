@@ -47,26 +47,33 @@ class ThrowSelection(discord.ui.Select):
                 view: ThrowView = self.view
                 view.thrown_tile = tile
                 throwing_tile(self.player, self.ctx, tile)
-                await interaction.response().send_message("tile " + Emojis.get_emoji(str(tile)) + " thrown")
+                await interaction.response.send_message("tile " + Emojis.get_emoji(str(tile)) + " thrown")
         self.view.stop()
         self.disabled = True
 
 async def win_check(button) -> None:
+    print("hey !")
     button.view.stop()
-    button.view.is_winning = True
-    combos = button.view.player.shown_tiles
-    button.view.player.win_tiles_list = button.view.player.tiles
-    win_tiles_list: TileList = button.view.player.win_tiles_list
+    player: Player = button.view.player
+    combos: list[TileList] = player.shown_tiles
+    player.win_tiles_list = player.tiles
+    win_tiles_list: TileList = player.win_tiles_list
     while len(combos) < 5:
-        pass
+        print("there's something there !")
+        combo_view = WinSelectionView(player)
+        await player.user.send("form a combo using your tiles", view=combo_view)
+        await combo_view.wait()
+        combos.append(combo_view.combo)
+        for tile in combo_view.combo: player.win_tiles_list.remove(tile)
     if win_tiles_list[0].matches_tile(win_tiles_list[1]):
         button.view.win = True
+        await player.user.send("Congrats ! You win")
+
 
 class ChooseToWinView(discord.ui.View):
     def __init__(self, player: Player):
         super().__init__()
         self.player = player
-        self.is_winning = False
         self.win = False
         self.add_item(IsWinningButton()).add_item(IsntWinningButton())
 
@@ -78,15 +85,16 @@ class IsWinningButton(discord.ui.Button):
         super().__init__(label="Yes", style=ButtonStyle.green)
 
     async def callback(self, interaction: Interaction) -> Any:
-        await interaction.response().send_message("You chose to win")
+        await interaction.response.send_message("You chose to win")
         await win_check(self)
+        self.view.stop()
 
 class IsntWinningButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="No", style=ButtonStyle.red)
 
     async def callback(self, interaction: Interaction) -> Any:
-        await interaction.response().send_message("You aren't winning")
+        await interaction.response.send_message("You aren't winning")
         self.view.stop()
 
 class TakeView(discord.ui.View):
@@ -106,7 +114,7 @@ class TakeButton(discord.ui.Button):
 
     async def callback(self, interaction: Interaction) -> Any:
         combo_select_view = ComboSelectionView(self.thrown_tile, self.player, self.is_chi_player, self.ctx)
-        await interaction.response().send_message("how are you gonna take this tile ?", view=combo_select_view)
+        await interaction.response.send_message("how are you gonna take this tile ?", view=combo_select_view)
         await combo_select_view.wait()
         self.view.result_combo = combo_select_view.result_combo
         self.view.result_combo_type = combo_select_view.result_combo_type
@@ -118,7 +126,7 @@ class DontTakeButton(discord.ui.Button):
 
     async def callback(self, interaction: Interaction) -> Any:
         self.view.stop()
-        await interaction.response().send_message("you chose not to take this tile")
+        await interaction.response.send_message("you chose not to take this tile")
 
 class ComboSelectionView(discord.ui.View):
     def __init__(self, thrown_tile: Tile.Tile, player: Player, is_chi_player: bool, ctx: Context):
@@ -172,7 +180,7 @@ class ComboSelect(discord.ui.Select):
             tile = GameHolder.Game[self.ctx.guild].draw_pile.draw()
             GameHolder.Game[self.ctx.guild].draw_pile.remove_tile(tile)
             self.player.add_tile(tile)
-            await interaction.response().send_message("Kong")
+            await interaction.response.send_message("Kong")
 
         elif self.values[0] == ((self.thrown_tile.get_name()+" ")*2)[:-1]:
             for a in range(2): self.player.tiles.remove(self.thrown_tile)
@@ -180,7 +188,7 @@ class ComboSelect(discord.ui.Select):
 
             self.view.result_combo = [self.thrown_tile]*3
             self.view.result_combo_type = Families.ComboTypes.PONG
-            await interaction.response().send_message("Pong")
+            await interaction.response.send_message("Pong")
 
         elif one_less_authorized and two_less_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-2).get_name()):
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
@@ -189,7 +197,7 @@ class ComboSelect(discord.ui.Select):
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 2)]
             self.view.result_combo_type = Families.ComboTypes.CHI
-            await interaction.response().send_message("Chi")
+            await interaction.response.send_message("Chi")
 
         elif one_less_authorized and one_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb-1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()):
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1))
@@ -198,7 +206,7 @@ class ComboSelect(discord.ui.Select):
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb - 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1)]
             self.view.result_combo_type = Families.ComboTypes.CHI
-            await interaction.response().send_message("Chi")
+            await interaction.response.send_message("Chi")
 
         elif one_more_authorized and two_more_authorized and self.values[0] == (Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+1).get_name()+" "+Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb+2).get_name()):
             self.player.tiles.remove(Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1))
@@ -207,10 +215,10 @@ class ComboSelect(discord.ui.Select):
 
             self.view.result_combo = [self.thrown_tile, Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 1), Tile.Tile(self.thrown_tile.family, self.thrown_tile.nb + 2)]
             self.view.result_combo_type = Families.ComboTypes.CHI
-            await interaction.response().send_message("Chi")
+            await interaction.response.send_message("Chi")
 
         elif self.values[0] == "Don't take":
-            await interaction.response().send_message("you chose no to take the tile")
+            await interaction.response.send_message("you chose no to take the tile")
         self.view.stop()
 
 class WinSelectionView(discord.ui.View):
@@ -218,13 +226,18 @@ class WinSelectionView(discord.ui.View):
         super().__init__()
         self.player = player
         self.add_item(WinSelection(self.player))
-        self.combo: Optional[TileList]
+        self.combo: Optional[TileList] = None
+
+    def on_timeout(self) -> None:
+        combos = self.player.win_tiles_list.get_combinations()
+        self.combo = choice(combos)
+        self.stop()
 
 class WinSelection(discord.ui.Select):
     def __init__(self, player: Player):
         self.player = player
         options: list[SelectOption] = []
-        combos = player.combo_tiles.get_combinations()
+        combos = player.win_tiles_list.get_combinations()
         for combo in combos:
             options.append(SelectOption(label=combo.get_tiles_name(), emoji=Emojis.get_emoji(str(combo[0])), value=str(combo),
                                         description=("Kong" if len(combo)==4 else ("Pong" if combo[0].matches_tile(combo[1]) else "Chi"))))
@@ -235,5 +248,8 @@ class WinSelection(discord.ui.Select):
         if self.values[0]=="Don't win":
             self.view.combo = None
         else:
-            #TODO:
-            pass
+            combos = self.player.win_tiles_list.get_combinations()
+            for combo in combos:
+                if str(combo)==self.values[0]:
+                    self.view.combo = combo
+        self.view.stop()
